@@ -3,7 +3,7 @@
 #include "pars/parsBHT2.hxx"
 
 /////////////////////////////////////////////////////////////
-void fit_simul(TString trigger = "BHT2", TString bin = "9mult20")
+void fit_simul(TString trigger = "BHT2", TString bin = "int")
 {
 	// Load the data file
 	if (trigger == "BHT1")
