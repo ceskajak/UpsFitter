@@ -36,7 +36,7 @@ INPUT FILES
 
 // File locations
 TString infile_BHT1 = "../data/BHT1.masssp.root";
-TString infile_BHT2 = "../data/BHT2_251128.260209.cands.root";
+TString infile_BHT2 = "../data/BHT2_251128.default.cands.root";
 
 /*
 /////////////////////////////////////////////////////////////

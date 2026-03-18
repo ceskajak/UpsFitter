@@ -41,14 +41,23 @@ vector<vector<Double_t>> parBHT2_int =
 
 vector<vector<Double_t>> fracBHT2_int =
 {
-	{0.74, 0.4, 1.0},	// LS bg frac
-	{0.63, 0.0, 1.0},	// US bg frac
-	{0.725, 0.72, 0.73},	// sig1 frac
-	{0.535, 0.518, 0.552}	// sig2 frac
+	{0.74, 0.4, 1.0},		// LS bg frac
+    {0.63, 0.0, 1.0},		// US bg frac
+    {0.7126, 0.71, 0.715},	// sig1_frac
+    {0.6828, 0.68, 0.685}	// sig2_frac
 };
 
 map_par["BHT2_int"]  = parBHT2_int;
 map_frac["BHT2_int"]  = fracBHT2_int;
+
+map_par["BHT2_m1ymp5"]  = parBHT2_int;
+map_frac["BHT2_m1ymp5"]  = fracBHT2_int;
+
+map_par["BHT2_mp5yp5"]  = parBHT2_int;
+map_frac["BHT2_mp5yp5"]  = fracBHT2_int;
+
+map_par["BHT2_p5y1"]  = parBHT2_int;
+map_frac["BHT2_p5y1"]  = fracBHT2_int;
 
 /////////////////////////////////////////////////////////////
 // 0 <= TofMult < 3
@@ -72,10 +81,10 @@ vector<vector<Double_t>> parBHT2_0mult3 =
 
 vector<vector<Double_t>> fracBHT2_0mult3 =
 {
-	{0.74, 0.3, 1.0},	// LS bg frac
-	{0.63, 0.0, 1.0},	// US bg frac
-	{0.725, 0.72, 0.73},	// sig1 frac
-	{0.535, 0.518, 0.552}	// sig2 frac
+	{0.74, 0.4, 1.0},		// LS bg frac
+    {0.63, 0.0, 1.0},		// US bg frac
+    {0.7126, 0.71, 0.715},	// sig1_frac
+    {0.6828, 0.68, 0.685}	// sig2_frac
 };
 
 map_par["BHT2_0mult3"]  = parBHT2_0mult3;
@@ -103,10 +112,10 @@ vector<vector<Double_t>> parBHT2_3mult6 =
 
 vector<vector<Double_t>> fracBHT2_3mult6 =
 {
-	{0.74, 0.4, 1.0},	// LS bg frac
-	{0.63, 0.0, 1.0},	// US bg frac
-	{0.725, 0.72, 0.73},	// sig1 frac
-	{0.535, 0.518, 0.552}	// sig2 frac
+	{0.74, 0.4, 1.0},		// LS bg frac
+    {0.63, 0.0, 1.0},		// US bg frac
+    {0.7126, 0.71, 0.715},	// sig1_frac
+    {0.6828, 0.68, 0.685}	// sig2_frac
 };
 
 map_par["BHT2_3mult6"]  = parBHT2_3mult6;
@@ -134,10 +143,10 @@ vector<vector<Double_t>> parBHT2_6mult9 =
 
 vector<vector<Double_t>> fracBHT2_6mult9 =
 {
-	{0.74, 0.4, 1.0},	// LS bg frac
-	{0.63, 0.0, 1.0},	// US bg frac
-	{0.725, 0.72, 0.73},	// sig1 frac
-	{0.535, 0.518, 0.552}	// sig2 frac
+	{0.74, 0.4, 1.0},		// LS bg frac
+    {0.63, 0.0, 1.0},		// US bg frac
+    {0.7126, 0.71, 0.715},	// sig1_frac
+    {0.6828, 0.68, 0.685}	// sig2_frac
 };
 
 map_par["BHT2_6mult9"]  = parBHT2_6mult9;
@@ -165,10 +174,10 @@ vector<vector<Double_t>> parBHT2_9mult12 =
 
 vector<vector<Double_t>> fracBHT2_9mult12 =
 {
-	{0.74, 0.4, 1.0},	// LS bg frac
-	{0.63, 0.0, 1.0},	// US bg frac
-	{0.725, 0.72, 0.73},	// sig1 frac
-	{0.535, 0.518, 0.552}	// sig2 frac
+	{0.74, 0.4, 1.0},		// LS bg frac
+    {0.63, 0.0, 1.0},		// US bg frac
+    {0.7126, 0.71, 0.715},	// sig1_frac
+    {0.6828, 0.68, 0.685}	// sig2_frac
 };
 
 map_par["BHT2_9mult12"]  = parBHT2_9mult12;
@@ -196,10 +205,10 @@ vector<vector<Double_t>> parBHT2_12mult20 =
 
 vector<vector<Double_t>> fracBHT2_12mult20 =
 {
-	{0.74, 0.4, 1.0},	// LS bg frac
-	{0.63, 0.0, 1.0},	// US bg frac
-	{0.725, 0.72, 0.73},	// sig1 frac
-	{0.535, 0.518, 0.552}	// sig2 frac
+	{0.74, 0.4, 1.0},		// LS bg frac
+    {0.63, 0.0, 1.0},		// US bg frac
+    {0.7126, 0.71, 0.715},	// sig1_frac
+    {0.6828, 0.68, 0.685}	// sig2_frac
 };
 
 map_par["BHT2_12mult20"]  = parBHT2_12mult20;
@@ -227,10 +236,10 @@ vector<vector<Double_t>> parBHT2_9mult20 =
 
 vector<vector<Double_t>> fracBHT2_9mult20 =
 {
-	{0.74, 0.4, 1.0},	// LS bg frac
-	{0.63, 0.0, 1.0},	// US bg frac
-	{0.725, 0.72, 0.73},	// sig1 frac
-	{0.535, 0.518, 0.552}	// sig2 frac
+	{0.74, 0.4, 1.0},		// LS bg frac
+    {0.63, 0.0, 1.0},		// US bg frac
+    {0.7126, 0.71, 0.715},	// sig1_frac
+    {0.6828, 0.68, 0.685}	// sig2_frac
 };
 
 map_par["BHT2_9mult20"]  = parBHT2_9mult20;
@@ -258,10 +267,10 @@ vector<vector<Double_t>> parBHT2_0pT2 =
 
 vector<vector<Double_t>> fracBHT2_0pT2 =
 {
-	{0.74, 0.4, 1.0},	// LS bg frac
-	{0.63, 0.0, 1.0},	// US bg frac
-	{0.725, 0.72, 0.73},	// sig1 frac
-	{0.535, 0.518, 0.552}	// sig2 frac
+	{0.74, 0.4, 1.0},		// LS bg frac
+    {0.63, 0.0, 1.0},		// US bg frac
+    {0.7126, 0.71, 0.715},	// sig1_frac
+    {0.6828, 0.68, 0.685}	// sig2_frac
 };
 
 map_par["BHT2_0pT2"]  = parBHT2_0pT2;
@@ -289,10 +298,10 @@ vector<vector<Double_t>> parBHT2_2pT4 =
 
 vector<vector<Double_t>> fracBHT2_2pT4 =
 {
-	{0.74, 0.4, 1.0},	// LS bg frac
-	{0.63, 0.0, 1.0},	// US bg frac
-	{0.725, 0.72, 0.73},	// sig1 frac
-	{0.535, 0.518, 0.552}	// sig2 frac
+	{0.74, 0.4, 1.0},		// LS bg frac
+    {0.63, 0.0, 1.0},		// US bg frac
+    {0.7126, 0.71, 0.715},	// sig1_frac
+    {0.6828, 0.68, 0.685}	// sig2_frac
 };
 
 map_par["BHT2_2pT4"]  = parBHT2_2pT4;
@@ -320,10 +329,10 @@ vector<vector<Double_t>> parBHT2_4pT6 =
 
 vector<vector<Double_t>> fracBHT2_4pT6 =
 {
-	{0.74, 0.4, 1.0},	// LS bg frac
-	{0.63, 0.0, 1.0},	// US bg frac
-	{0.725, 0.72, 0.73},	// sig1 frac
-	{0.535, 0.518, 0.552}	// sig2 frac
+	{0.74, 0.4, 1.0},		// LS bg frac
+    {0.63, 0.0, 1.0},		// US bg frac
+    {0.7126, 0.71, 0.715},	// sig1_frac
+    {0.6828, 0.68, 0.685}	// sig2_frac
 };
 
 map_par["BHT2_4pT6"]  = parBHT2_4pT6;
@@ -351,10 +360,10 @@ vector<vector<Double_t>> parBHT2_6pT8 =
 
 vector<vector<Double_t>> fracBHT2_6pT8 =
 {
-	{0.74, 0.4, 1.0},	// LS bg frac
-	{0.63, 0.0, 1.0},	// US bg frac
-	{0.725, 0.72, 0.73},	// sig1 frac
-	{0.535, 0.518, 0.552}	// sig2 frac
+	{0.74, 0.4, 1.0},		// LS bg frac
+    {0.63, 0.0, 1.0},		// US bg frac
+    {0.7126, 0.71, 0.715},	// sig1_frac
+    {0.6828, 0.68, 0.685}	// sig2_frac
 };
 
 map_par["BHT2_6pT8"]  = parBHT2_6pT8;
@@ -382,10 +391,10 @@ vector<vector<Double_t>> parBHT2_8pT10 =
 
 vector<vector<Double_t>> fracBHT2_8pT10 =
 {
-	{0.74, 0.4, 1.0},	// LS bg frac
-	{0.63, 0.0, 1.0},	// US bg frac
-	{0.725, 0.72, 0.73},	// sig1 frac
-	{0.535, 0.518, 0.552}	// sig2 frac
+	{0.74, 0.4, 1.0},		// LS bg frac
+    {0.63, 0.0, 1.0},		// US bg frac
+    {0.7126, 0.71, 0.715},	// sig1_frac
+    {0.6828, 0.68, 0.685}	// sig2_frac
 };
 
 map_par["BHT2_8pT10"]  = parBHT2_8pT10;
@@ -412,8 +421,8 @@ vector<vector<Double_t>> parBHT2_10pT15 =
 
 vector<vector<Double_t>> fracBHT2_10pT15 =
 {
-	{0.74, 0.4, 1.0},	// LS bg frac
-	{0.63, 0.0, 1.0},	// US bg frac
-	{0.725, 0.72, 0.73},	// sig1 frac
-	{0.535, 0.518, 0.552}	// sig2 frac
+	{0.74, 0.4, 1.0},		// LS bg frac
+    {0.63, 0.0, 1.0},		// US bg frac
+    {0.7126, 0.71, 0.715},	// sig1_frac
+    {0.6828, 0.68, 0.685}	// sig2_frac
 };

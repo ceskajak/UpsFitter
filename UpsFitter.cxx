@@ -3,7 +3,7 @@
 #include "pars/parsBHT2.hxx"
 
 /////////////////////////////////////////////////////////////
-void fit_simul(TString trigger = "BHT2", TString bin = "int")
+void UpsFitter(TString trigger = "BHT2", TString bin = "int")
 {
 	// Load the data file
 	if (trigger == "BHT1")
@@ -284,10 +284,14 @@ void fit_bin(RooDataSet * ds_US, RooDataSet * ds_LS, TString trigger, TString bi
 
 	
 	TLatex *latex1 = new TLatex();
-	latex1->SetTextSize(0.05);
+	latex1->SetTextSize(0.045);
 	latex1->SetNDC();
 	latex1->DrawLatex(0.55, 0.85, Form("#frac{#chi^{2}}{N^{US}_{dof}} = %.2f, #frac{#chi^{2}}{N^{LS}_{dof}} = %.2f", chi2ndf_US, chi2ndf_LS));
-	latex1->DrawLatex(0.55, 0.70, Form("#Upsilon(1S+2S+3S) = %.0f #pm %.0f", (yield1.getVal()*US_entries), (yield1.getPropagatedError(*result)*US_entries)));
+	latex1->DrawLatex(0.55, 0.75, Form("#Upsilon(1S+2S+3S) = %.0f #pm %.0f", (yield1.getVal()*US_entries), (yield1.getPropagatedError(*result)*US_entries)));
+	latex1->DrawLatex(0.55, 0.65, Form("S/#sqrt{S+B} = %.2f", (yield1.getVal()*US_entries)/ sqrt((yield1.getVal()*US_entries + US_entries))));
+
+	cout << "S = " << (yield1.getVal()*US_entries) << ", B = " << US_entries << endl;
+	cout << "S/sqrt(S+B) = " << (yield1.getVal()*US_entries)/ sqrt((yield1.getVal()*US_entries + US_entries)) << endl;
 
 	/*
 	TLatex *latex3 = new TLatex();
