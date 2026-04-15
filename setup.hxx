@@ -36,7 +36,7 @@ INPUT FILES
 
 // File locations
 TString infile_BHT1 = "../data/BHT1.masssp.root";
-TString infile_BHT2 = "../data/BHT2_251128.default.cands.root";
+TString infile_BHT2 = "../data/BHT2_251128.260209.cands.root";
 
 /*
 /////////////////////////////////////////////////////////////
@@ -69,7 +69,7 @@ Double_t bin_width = 0.2;	// Bin width for drawing
 
 Int_t sigma = 1;	// sigma for error drawing
 
-Bool_t useLinear = false;	// Use linear error visualisation (faster, less accurate for strong correlations)
+Bool_t useLinear = true;	// Use linear error visualisation (faster, less accurate for strong correlations)
 
 /*
 /////////////////////////////////////////////////////////////

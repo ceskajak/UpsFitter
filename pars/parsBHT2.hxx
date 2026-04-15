@@ -41,10 +41,16 @@ vector<vector<Double_t>> parBHT2_int =
 
 vector<vector<Double_t>> fracBHT2_int =
 {
+	
 	{0.74, 0.4, 1.0},		// LS bg frac
     {0.63, 0.0, 1.0},		// US bg frac
     {0.7126, 0.71, 0.715},	// sig1_frac
     {0.6828, 0.68, 0.685}	// sig2_frac
+	/*
+	2 sigma
+	{0.7126, 0.7074, 0.7178},	// sig1_frac
+	{0.6828, 0.6782, 0.6874}	// sig2_frac
+	*/
 };
 
 map_par["BHT2_int"]  = parBHT2_int;

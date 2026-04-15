@@ -258,10 +258,9 @@ void fit_bin(RooDataSet * ds_US, RooDataSet * ds_LS, TString trigger, TString bi
 	out << "#chi^{2}/N^{US}_{dof} = " << chi2ndf_US << ", #chi^{2}/N^{LS}_{dof} = " << chi2ndf_LS << endl;
 	out << "frac: " << yield1.getVal() << ", yield: " << (yield1.getVal()*US_entries) << endl;
 	out << "error frac: " << yield1.getPropagatedError(*result) << ", error: " << (yield1.getPropagatedError(*result)*US_entries) << endl;
-	out << "sig1 yield: " << sig1_yield.getVal() << endl;
-	out << "sig2 yield: " << sig2_yield.getVal() << endl;
-	out << "sig3 yield: " << sig3_yield.getVal() << endl;
-	out << "combined: " << (sig1_yield.getVal() + sig2_yield.getVal() + sig3_yield.getVal()) << endl;
+	out << "yield frac: " << yield1.getVal() << ", yield: " << ((yield1.getVal()-yield2.getVal()-yield3.getVal())*US_entries) << endl;
+	out << "yield2 frac: " << yield2.getVal() << ", yield2: " << ((yield2.getVal()-yield3.getVal()) * US_entries) << endl;
+	out << "yield3 frac: " << yield3.getVal() << ", yield3: " << (yield3.getVal() * US_entries) << endl;
 	out << "bgLS: " << bgLS.getVal() << " #pm " << bgLS.getError() << endl;
 	out << "bgUS: " << bgUS.getVal() << " #pm " << bgUS.getError() << endl;
 	out << "sig1 mu: " << sig1_mu.getVal() << " #pm " << sig1_mu.getError() << endl;
@@ -280,6 +279,8 @@ void fit_bin(RooDataSet * ds_US, RooDataSet * ds_LS, TString trigger, TString bi
 	out << "bgUS_frac: " << bgUS_frac.getVal() << " #pm " << bgUS_frac.getError() << endl;
 	out << "sig1_frac: " << sig1_frac.getVal() << " #pm " << sig1_frac.getError() << endl;
 	out << "sig2_frac: " << sig2_frac.getVal() << " #pm " << sig2_frac.getError() << endl;
+	out << "S = " << (yield1.getVal()*US_entries) << ", B = " << US_entries << endl;
+	out << "S/sqrt(S+B) = " << (yield1.getVal()*US_entries)/ sqrt((yield1.getVal()*US_entries + US_entries)) << endl;
 	out.close();
 
 	
