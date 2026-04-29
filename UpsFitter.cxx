@@ -84,12 +84,6 @@ void fit_bin(RooDataSet * ds_US, RooDataSet * ds_LS)
 										RecoverFromUndefinedRegions(1000),
 										Save());
 
-	// Compute yields
-	RooGenericPdf yield("yield", "yield from signal fit", "(1.0-bgComb_frac)*(1.0-bgRes_frac)", RooArgSet(bgComb_frac, bgRes_frac));
-	cout << "US entries: " << US_entries << ", LS entries: " << LS_entries << endl << endl;
-	cout << "yield frac: " << yield.getVal() << ", yield: " << (yield.getVal()*US_entries) << endl;
-	cout << "error frac: " << yield.getPropagatedError(*result) << ", error: " << (yield.getPropagatedError(*result)*US_entries) << endl << endl;
-	cout << "yield frac: " << yield.getVal() << ", yield: " << ((yield.getVal())*US_entries) << endl;
 
 	// Create a canvas for plotting
 	TCanvas *cnv = new TCanvas("cnv", "cnv", 1600, 1200);
@@ -125,14 +119,22 @@ void fit_bin(RooDataSet * ds_US, RooDataSet * ds_LS)
 	frame->Draw("F");
 	//--------------------------------------------
 
+	// Compute yields
+	RooGenericPdf yield("yield", "yield from signal fit", "(1.0-bgComb_frac)*(1.0-bgRes_frac)", RooArgSet(bgComb_frac, bgRes_frac));
+	cout << "US entries: " << US_entries << ", LS entries: " << LS_entries << endl;
+	cout << "yield frac: " << yield.getVal() << ", yield: " << (yield.getVal()*US_entries) << endl;
+	cout << "error frac: " << yield.getPropagatedError(*result) << ", error: " << (yield.getPropagatedError(*result)*US_entries) << endl;
+
 	// Calculate chi2 after extracting the number of parameters - used to calculate Ndof
 	Int_t nparam_US = total_sim->getParameters(*ds_US)->selectByAttrib("Constant", kFALSE)->getSize();
 	cout << "nparam_US = " << nparam_US << endl;
 	Double_t chi2ndf_US = frame->chiSquare(nparam_US);
+	cout << "chi2/ndf (US) = " << chi2ndf_US << endl;
 
 	Int_t nparam_LS = expComb->getParameters(*ds_LS)->selectByAttrib("Constant", kFALSE)->getSize();
 	cout << "nparam_LS = " << nparam_LS << endl;
 	Double_t chi2ndf_LS = frame->chiSquare(nparam_LS);
+	cout << "chi2/ndf (LS) = " << chi2ndf_LS << endl;
 
 	/*
 	// pulls
@@ -161,8 +163,8 @@ void fit_bin(RooDataSet * ds_US, RooDataSet * ds_LS)
 	latex1->DrawLatex(0.55, 0.65, Form("S/#sqrt{S+B} = %.2f", (yield1.getVal()*US_entries)/ sqrt((yield1.getVal()*US_entries + US_entries))));
 	*/
 
-	cout << "S = " << (yield.getVal()*US_entries) << ", B = " << US_entries << endl;
-	cout << "S/sqrt(S+B) = " << (yield.getVal()*US_entries)/ sqrt((yield.getVal()*US_entries + US_entries)) << endl;
+	cout << "S = " << (yield.getVal()*US_entries) << ", S+B = " << US_entries << endl;
+	cout << "S/sqrt(S+B) = " << (yield.getVal()*US_entries)/ sqrt(US_entries) << endl;
 
 	/*
 	TLatex *latex3 = new TLatex();
