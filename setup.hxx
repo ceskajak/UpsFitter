@@ -35,8 +35,7 @@ INPUT FILES
 */
 
 // File locations
-TString infile_BHT1 = "../data/BHT1.masssp.root";
-TString infile_BHT2 = "../data/BHT2_251128.260209.cands.root";
+TString infile = "data.root";
 
 /*
 /////////////////////////////////////////////////////////////
@@ -77,10 +76,6 @@ GLOBAL VARIABLES
 /////////////////////////////////////////////////////////////
 */
 
-// Global maps to store parameters for different bins/triggers
-map<TString, vector<vector<Double_t>>> map_par;
-map<TString, vector<vector<Double_t>>> map_frac;
-
 // Data file
 TFile * f_data;
 
@@ -96,5 +91,4 @@ FUNCTIONS
 
 // This function fits the signal via RooFit
 // ds_US and ds_LS are the datasets for unlike-sign and like-sign pairs respectively
-// trigger (BHT1 or BHT2) and bin (e.g. "0mult3", "int", etc.) are used to load the correct parameters from the header files
-void fit_bin(RooDataSet * ds_US, RooDataSet * ds_LS, TString trigger, TString bin);
+void fit_bin(RooDataSet * ds_US, RooDataSet * ds_LS);
