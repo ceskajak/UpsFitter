@@ -78,7 +78,6 @@ void fit_bin(RooDataSet * ds_US, RooDataSet * ds_LS)
 										Extended(true),
 										//Minimizer("Minuit2", "scan"),
 										Minimizer("Minuit2", "migrad"),
-										MaxCalls(100000),
 										Strategy(2),
 										EvalErrorWall(1),
 										RecoverFromUndefinedRegions(1000),
