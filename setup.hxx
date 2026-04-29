@@ -39,24 +39,6 @@ TString infile = "data.root";
 
 /*
 /////////////////////////////////////////////////////////////
-NAME HANDLERS
-/////////////////////////////////////////////////////////////
-*/
-
-TString tag = "default";	// tag for output files
-
-// Curent date (YYMMDD) for output purposes
-time_t timestamp = time(NULL);
-struct tm datetime = *localtime(&timestamp);
-
-char output[6];
-
-strftime(output, 8, "%y%m%d", &datetime);
-
-TString date = output;
-
-/*
-/////////////////////////////////////////////////////////////
 RUN PARAMETERS
 /////////////////////////////////////////////////////////////
 */
