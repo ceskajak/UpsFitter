@@ -1,14 +1,89 @@
-#include "setup.hxx"
+#include <iostream>
+#include "map"
 
+#include "TString.h"
+#include "TFile.h"
+#include "TH1.h"
+#include "TCanvas.h"
+#include "TStyle.h"
+#include "TROOT.h"
+#include "TLatex.h"
+#include "RooRealVar.h"
+#include "RooDataHist.h"
+#include "RooPlot.h"
+#include "RooAddPdf.h"
+#include "RooGaussian.h"
+#include "RooExponential.h"
+#include "RooHist.h"
+#include "RooArgSet.h"
+#include "RooFitResult.h"
+#include "RooGenericPdf.h"
+
+// Namespaces
+using namespace std;
+using namespace RooFit;
+
+/*
 /////////////////////////////////////////////////////////////
+INPUT FILES
+/////////////////////////////////////////////////////////////
+*/
+
+// File locations
+TString infile = "data.root";
+
+/*
+/////////////////////////////////////////////////////////////
+RUN PARAMETERS
+/////////////////////////////////////////////////////////////
+*/
+
+Double_t min_mass = 7.6;	// x-axis lower limit for fitting
+Double_t max_mass = 13.0;	// x-axis upper limit for fitting
+
+Double_t bin_width = 0.2;	// Bin width for drawing
+
+Int_t sigma = 1;	// sigma for error drawing
+
+Bool_t useLinear = true;	// Use linear error visualisation (faster, less accurate for strong correlations)
+
+/*
+/////////////////////////////////////////////////////////////
+GLOBAL VARIABLES
+/////////////////////////////////////////////////////////////
+*/
+
+// Data file
+TFile * f_data;
+
+// Variables for fitting
+RooRealVar mass("mass", "mass", min_mass, max_mass, "GeV/c^{2}");
+RooRealVar charge("charge", "charge", -3, 3, "e");
+
+/*
+/////////////////////////////////////////////////////////////
+FUNCTION DECLARATIONA
+/////////////////////////////////////////////////////////////
+*/
+
+// This function fits the signal via RooFit
+// ds_US and ds_LS are the datasets for unlike-sign and like-sign pairs respectively
+void fit_bin(RooDataSet * ds_US, RooDataSet * ds_LS);
+
+
+/*
+/////////////////////////////////////////////////////////////
+MAIN FUNCTION
+/////////////////////////////////////////////////////////////
+*/
 void UpsFitter()
 {
 	// Load the data file
 	f_data = new TFile(infile);
 
-	// Load datasets for the specified bin
+	// Load datasets from the file and create RooDataSets for unlike-sign (US) and like-sign (LS) pairs
 	TTree * tree = (TTree *)f_data->Get("tree");
-		
+	
 	RooDataSet * ds_US = new RooDataSet("ds_US", "ds_US", RooArgSet(mass, charge), Import(*tree), Cut("charge==0"));
 	ds_US = (RooDataSet *)ds_US->reduce(RooArgSet(mass));
 	ds_US->Print();
@@ -27,7 +102,6 @@ void UpsFitter()
 }
 
 /////////////////////////////////////////////////////////////
-// TODO: rename the parameters sensibly and clean this up
 void fit_bin(RooDataSet * ds_US, RooDataSet * ds_LS)
 {
 	// Save number of entries
@@ -40,7 +114,9 @@ void fit_bin(RooDataSet * ds_US, RooDataSet * ds_LS)
 	sample.defineType("LS");
 
 	// Define a combined dataset 
-	RooDataSet * ds_comb = new RooDataSet("ds_comb", "Combined dataset", RooArgList(mass), Index(sample), Import("US", *ds_US), Import("LS", *ds_LS));
+	RooDataSet * ds_comb = new RooDataSet("ds_comb", "Combined dataset",
+										RooArgList(mass), Index(sample),
+										Import("US", *ds_US), Import("LS", *ds_LS));
 
 	// Define parameters
 	RooRealVar bgComb("bgComb","Comb", 0, -1, 1);
@@ -64,7 +140,10 @@ void fit_bin(RooDataSet * ds_US, RooDataSet * ds_LS)
 	RooCBShape *sig = new RooCBShape("gauss1", "CB signal 1", mass, sig_mu, sig_sigma, sig_alpha, sig_n);
 
 	// Add PDFs together with recursive fractions (forces all ratios to be in [0,1])
-	RooAddPdf *total_sim = new RooAddPdf("total_sim", "US total", RooArgList(*expComb, *expRes, *sig), RooArgList(bgComb_frac, bgRes_frac), kTRUE);
+	RooAddPdf *total_sim = new RooAddPdf("total_sim", "US total",
+							RooArgList(*expComb, *expRes, *sig),	// components
+							RooArgList(bgComb_frac, bgRes_frac),	// fractions for the first two components, the signal fraction is then 1 - (bgComb_frac + bgRes_frac)
+							kTRUE);	// kTRUE makes the fractions recursive
 
 	// Simultaneous model
 	RooSimultaneous * simPdf = new RooSimultaneous("simPdf", "simPdf", sample);
@@ -76,8 +155,8 @@ void fit_bin(RooDataSet * ds_US, RooDataSet * ds_LS)
 	// Fit the model to the combined dataset
 	RooFitResult *result = simPdf->fitTo(*ds_comb,
 										Extended(true),
-										//Minimizer("Minuit2", "scan"),
-										Minimizer("Minuit2", "migrad"),
+										//Minimizer("Minuit2", "scan"),	// Use scan minimizer for better error estimation, but much slower
+										Minimizer("Minuit2", "migrad"),	// Use migrad minimizer for faster fitting, but less accurate error estimation for strong correlations
 										Strategy(2),
 										EvalErrorWall(1),
 										RecoverFromUndefinedRegions(1000),
@@ -103,7 +182,7 @@ void fit_bin(RooDataSet * ds_US, RooDataSet * ds_LS)
 	gPad->SetBottomMargin(0.15);
 	gPad->SetTopMargin(0.05);
 	ds_LS->plotOn(frame, MarkerColor(kRed), LineColor(kRed));
-	ds_US->plotOn(frame);
+	ds_US->plotOn(frame, MarkerColor(kBlack), LineColor(kBlqack));
 	total_sim->plotOn(frame, VisualizeError(*result, sigma, useLinear), DrawOption("F"), FillStyle(3001));
 	total_sim->plotOn(frame);
 	total_sim->plotOn(frame, Components(*expComb), LineColor(kRed), LineStyle(kDashed), VisualizeError(*result, sigma, useLinear), DrawOption("F"), FillColor(kRed), FillStyle(3001));
@@ -135,8 +214,12 @@ void fit_bin(RooDataSet * ds_US, RooDataSet * ds_LS)
 	Double_t chi2ndf_LS = frame->chiSquare(nparam_LS);
 	cout << "chi2/ndf (LS) = " << chi2ndf_LS << endl;
 
+	// Calculate significance
+	cout << "S = " << (yield.getVal()*US_entries) << ", S+B = " << US_entries << endl;
+	cout << "S/sqrt(S+B) = " << (yield.getVal()*US_entries)/ sqrt(US_entries) << endl;
+
 	/*
-	// pulls
+	// Pull distribution plot
 	TCanvas *cnv_pull = new TCanvas("cnv_pull", "cnv_pull");
 	cnv_pull->cd();
 
@@ -147,13 +230,16 @@ void fit_bin(RooDataSet * ds_US, RooDataSet * ds_LS)
 	*/
 
 	/*
-	gStyle->SetOptStat(0) ;
+	// Correlation matrix and covariance matrix
+	gStyle->SetOptStat(0);
     TH2* hcorr = result->correlationHist();
 
 	result->correlationMatrix().Print();
 	result->covarianceMatrix().Print();
+	*/
 
-	
+	/*
+	// Draw fit results and statistics on the plot
 	TLatex *latex1 = new TLatex();
 	latex1->SetTextSize(0.045);
 	latex1->SetNDC();
@@ -162,17 +248,7 @@ void fit_bin(RooDataSet * ds_US, RooDataSet * ds_LS)
 	latex1->DrawLatex(0.55, 0.65, Form("S/#sqrt{S+B} = %.2f", (yield1.getVal()*US_entries)/ sqrt((yield1.getVal()*US_entries + US_entries))));
 	*/
 
-	cout << "S = " << (yield.getVal()*US_entries) << ", S+B = " << US_entries << endl;
-	cout << "S/sqrt(S+B) = " << (yield.getVal()*US_entries)/ sqrt(US_entries) << endl;
-
-	/*
-	TLatex *latex3 = new TLatex();
-	latex3->SetTextSize(0.05);
-	latex3->SetNDC();
-	latex3->DrawLatex(0.55, 0.6, "1 < #LT TofMult #GT < 2");
-	*/
-
-	// TODO rewrite as with pT bins!!!
+	// Save the plot
 	cnv->cd()->SaveAs("output.png");
 
 	// Clean up
