@@ -182,7 +182,7 @@ void fit_bin(RooDataSet * ds_US, RooDataSet * ds_LS)
 	gPad->SetBottomMargin(0.15);
 	gPad->SetTopMargin(0.05);
 	ds_LS->plotOn(frame, MarkerColor(kRed), LineColor(kRed));
-	ds_US->plotOn(frame, MarkerColor(kBlack), LineColor(kBlqack));
+	ds_US->plotOn(frame, MarkerColor(kBlack), LineColor(kBlack));
 	total_sim->plotOn(frame, VisualizeError(*result, sigma, useLinear), DrawOption("F"), FillStyle(3001));
 	total_sim->plotOn(frame);
 	total_sim->plotOn(frame, Components(*expComb), LineColor(kRed), LineStyle(kDashed), VisualizeError(*result, sigma, useLinear), DrawOption("F"), FillColor(kRed), FillStyle(3001));
