@@ -1,49 +1,56 @@
 #include "setup.hxx"
-#include "pars/parsBHT1.hxx"
+//#include "pars/parsBHT1.hxx"
 #include "pars/parsBHT2.hxx"
 
 /////////////////////////////////////////////////////////////
-void UpsFitter(TString trigger = "BHT2", TString bin = "int")
+void UpsFitter(TString kTRIG = "BHT2", TString kBIN = "int", TString kBG = "exp", TString kSIG = "CBShape")
 {
 	// Load the data file
-	if (trigger == "BHT1")
-		f_data = new TFile(infile_BHT1, "READ");
-	else if (trigger == "BHT2")
-		f_data = new TFile(infile_BHT2, "READ");
+	if (kTRIG == "BHT1")
+		f_IN = new TFile(f_BHT1, "READ");
+	else if (kTRIG == "BHT2")
+		f_IN = new TFile(f_BHT2, "READ");
 	else
 	{
-		cout << "Invalid trigger specified. Exiting." << endl;
-		return;
+		cout << "Invalid trigger specified. Exiting..." << endl;
+		return 1;
+	}
+
+	// Check if the bin makes sense
+	for (auto b : vec_bins)
+		if (b == kBIN) bool_bin = true;
+	if (!bool_bin)
+	{
+		cout << "Invalid bin specified. Exiting..." << endl;
+		return 2;
 	}
 
 	// Load datasets for the specified bin
-	TTree * tree = (TTree *)f_data->Get("t_" + bin);
+	TTree * tree = (TTree *)f_IN->Get("t_" + kBIN);
 		
-	RooDataSet * ds_US = new RooDataSet("ds_US_" + bin, "ds_US_" + bin, RooArgSet(mass, charge), Import(*tree), Cut("charge==0"));
+	RooDataSet * ds_US = new RooDataSet("ds_US_" + kBIN, "ds_US_" + kBIN, RooArgSet(mass, charge), Import(*tree), Cut("charge==0"));
 	ds_US = (RooDataSet *)ds_US->reduce(RooArgSet(mass));
 	ds_US->Print();
-	RooDataSet * ds_LS = new RooDataSet("ds_LS_" + bin, "ds_LS_" + bin, RooArgSet(mass, charge), Import(*tree), Cut("charge!=0"));
+	RooDataSet * ds_LS = new RooDataSet("ds_LS_" + kBIN, "ds_LS_" + kBIN, RooArgSet(mass, charge), Import(*tree), Cut("charge!=0"));
 	ds_LS = (RooDataSet *)ds_LS->reduce(RooArgSet(mass));
 	ds_LS->Print();
 
 	// This calls the fitting function
-	fit_bin(ds_US, ds_LS, trigger, bin);
+	fit_bin(ds_US, ds_LS, kTRIG, kBIN, kBG, kSIG);
 
 	// Clean up
 	delete ds_US;
 	delete ds_LS;
-	f_data->Close();
-	cout << "Fit for " << trigger << "_" << bin << " completed!" << endl;
+	f_IN->Close();
+	cout << "Fit for " << kTRIG << "_" << kBIN << " completed!" << endl;
+
+	return 0;
 }
 
 /////////////////////////////////////////////////////////////
 // TODO: rename the parameters sensibly and clean this up
-void fit_bin(RooDataSet * ds_US, RooDataSet * ds_LS, TString trigger, TString bin)
+void fit_bin(RooDataSet * ds_US, RooDataSet * ds_LS, TString kTRIG, TString kBIN, TString kBG, TString kSIG)
 {
-	// Define variable + ranges
-	RooRealVar mass("mass", "mass", min_mass, max_mass, "GeV/c^{2}");
-	mass.setRange("full", min_mass, max_mass);
-
 	// Save number of entries
 	double US_entries = ds_US->sumEntries();
 	double LS_entries = ds_LS->sumEntries();
@@ -53,85 +60,132 @@ void fit_bin(RooDataSet * ds_US, RooDataSet * ds_LS, TString trigger, TString bi
 	sample.defineType("US");
 	sample.defineType("LS");
 
+	// Simultaneous model
+	RooSimultaneous simPdf("simPdf", "simPdf", sample);
+
 	// Define a combined dataset 
-	RooDataSet * ds_comb = new RooDataSet("ds_comb", "Combined dataset", RooArgList(mass), Index(sample), Import("US", *ds_US), Import("LS", *ds_LS));
+	RooDataSet ds_comb("ds_comb", "Combined dataset", RooArgList(mass), Index(sample), Import("US", *ds_US), Import("LS", *ds_LS));
+	
+	// Get parameters for this bin and trigger
+	vector<vector<Double_t>> par_sig = map_par[kTRIG + "_" + kBIN];
+	vector<vector<Double_t>> par_bg = map_par_bg[kTRIG + "_" + kBG];
+	vector<vector<Double_t>> frac = map_frac[kTRIG + "_" + kBIN];
 
-	TString trigger_bin = trigger + "_" + bin;
+	// Load parameters and create PDFs
+	// Background
+	if (kBG == "exp")
+	{
+		RooRealVar var_bg_comb1("var_bg_comb","Combiantorial background exponent", par_bg[0][0], par_bg[0][1], par_bg[0][2]);
+		RooRealVar var_bg_res1("var_bg_res","Residual background exponent", par_bg[1][0], par_bg[1][1], par_bg[1][2]);
 
-	vector<vector<Double_t>> par = map_par[trigger_bin];
-	vector<vector<Double_t>> frac = map_frac[trigger_bin];
+		RooExponential pdf_bg_comb("pdf_bg_comb","Background, combinatorial, exponential", mass, var_bg_comb1);
+		RooExponential pdf_bg_res("pdf_bg_res","Background, residual, exponential", mass, var_bg_res1);
+	}
+	else if (kBG == "cheby")
+	{
+		cout << "Not implemented yet :(. Exitting..." << endl;
+		return;
+	}
+	else
+	{
+		cout << "Invalid background type. Exitting..." << endl;
+		return;
+	}
 
-	// Load the parameters from the array (saved in the header)
-	RooRealVar bgLS("bgLS","LS", par[0][0], par[0][1], par[0][2]);
-	RooRealVar bgUS("bgUS","US", par[1][0], par[1][1], par[1][2]);
-	RooRealVar sig1_mu("sig1_mu","#mu", par[2][0], par[2][1], par[2][2]);
-	RooRealVar sig2_mu("sig2_mu","#mu", par[3][0], par[3][1], par[3][2]);
-	RooRealVar sig3_mu("sig3_mu","#mu", par[4][0], par[4][1], par[4][2]);
-	RooRealVar sig1_sigma("sig1_sigma","#sigma", par[5][0], par[5][1], par[5][2]);
-	RooRealVar sig2_sigma("sig2_sigma","#sigma", par[6][0], par[6][1], par[6][2]);
-	RooRealVar sig3_sigma("sig3_sigma","#sigma", par[7][0], par[7][1], par[7][2]);
-	RooRealVar sig1_alpha("sig1_alpha","#alpha", par[8][0], par[8][1], par[8][2]);
-	RooRealVar sig2_alpha("sig2_alpha","#alpha", par[9][0], par[9][1], par[9][2]);
-	RooRealVar sig3_alpha("sig3_alpha","#alpha", par[10][0], par[10][1], par[10][2]);
-	RooRealVar sig1_n("sig1_n","#n", par[11][0], par[11][1], par[11][2]);
-	RooRealVar sig2_n("sig2_n","#n", par[12][0], par[12][1], par[12][2]);
-	RooRealVar sig3_n("sig3_n","#n", par[13][0], par[13][1], par[13][2]);
+	// Signal
+	if (kSIG == "CBShape")
+	{
+		RooRealVar var_sig1_mu("var_sig1_mu","Signal 1 #mu", par_sig[0][0], par_sig[0][1], par_sig[0][2]);
+		RooRealVar var_sig1_sigma("var_sig1_sigma","Signal 1 #sigma", par_sig[1][0], par_sig[1][1], par_sig[1][2]);
+		RooRealVar var_sig1_alpha("var_sig1_alpha","Signal 1 #alpha", par_sig[2][0], par_sig[2][1], par_sig[2][2]);
+		RooRealVar var_sig1_n("var_sig1_n","Signal 1 #n", par_sig[3][0], par_sig[3][1], par_sig[3][2]);
 
-	// used for 2D CB
-	/*
-	RooRealVar sig1_alphaL("sig1_alphaL","#alpha_{L}", par[10][0], par[10][1], par[10][2]);
-	RooRealVar sig2_alphaL("sig2_alphaL","#alpha_{L}", par[11][0], par[11][1], par[11][2]);
-	RooRealVar sig3_alphaL("sig3_alphaL","#alpha_{L}", par[12][0], par[12][1], par[12][2]);
-	RooRealVar sig1_alphaR("sig1_alphaR","#alpha_{R}", par[13][0], par[13][1], par[13][2]);
-	RooRealVar sig2_alphaR("sig2_alphaR","#alpha_{R}", par[14][0], par[14][1], par[14][2]);
-	RooRealVar sig3_alphaR("sig3_alphaR","#alpha_{R}", par[15][0], par[15][1], par[15][2]);
-	RooRealVar sig1_nL("sig1_nL","#n_{L}", par[16][0], par[16][1], par[16][2]);
-	RooRealVar sig2_nL("sig2_nL","#n_{L}", par[17][0], par[17][1], par[17][2]);
-	RooRealVar sig3_nL("sig3_nL","#n_{L}", par[18][0], par[18][1], par[18][2]);
-	RooRealVar sig1_nR("sig1_nR","#n_{R}", par[19][0], par[19][1], par[19][2]);
-	RooRealVar sig2_nR("sig2_nR","#n_{R}", par[20][0], par[20][1], par[20][2]);
-	RooRealVar sig3_nR("sig3_nR","#n_{R}", par[21][0], par[21][1], par[21][2]);
-	*/
+		RooRealVar var_sig2_mu("var_sig2_mu","Signal 2 #mu", par_sig[4][0], par_sig[4][1], par_sig[4][2]);
+		RooRealVar var_sig2_sigma("var_sig2_sigma","Signal 2 #sigma", par_sig[5][0], par_sig[5][1], par_sig[5][2]);
+		RooRealVar var_sig2_alpha("var_sig2_alpha","Signal 2 #alpha", par_sig[6][0], par_sig[6][1], par_sig[6][2]);
+		RooRealVar var_sig2_n("var_sig2_n","Signal 2 #n", par_sig[7][0], par_sig[7][1], par_sig[7][2]);
 
-	// Load recursive fractions for the components
-	RooRealVar bgLS_frac("bgLS_frac","bgLS_frac", frac[0][0], frac[0][1], frac[0][2]);
-	RooRealVar bgUS_frac("bgUS_frac","bgUS_frac", frac[1][0], frac[1][1], frac[1][2]);
-	RooRealVar sig1_frac("sig1_frac","sig1_frac", frac[2][0], frac[2][1], frac[2][2]);
-	RooRealVar sig2_frac("sig2_frac","sig2_frac", frac[3][0], frac[3][1], frac[3][2]);
+		RooRealVar var_sig3_mu("var_sig3_mu","Signal 3 #mu", par_sig[8][0], par_sig[8][1], par_sig[8][2]);
+		RooRealVar var_sig3_sigma("var_sig3_sigma","Signal 3 #sigma", par_sig[9][0], par_sig[9][1], par_sig[9][2]);
+		RooRealVar var_sig3_alpha("var_sig3_alpha","Signal 3 #alpha", par_sig[10][0], par_sig[10][1], par_sig[10][2]);
+		RooRealVar var_sig3_n("var_sig3_n","Signal 3 #n", par_sig[11][0], par_sig[11][1], par_sig[11][2]);
 
-	// Ensure the combinatorial background describes the LS data
-	bgLS_frac.setVal(ds_LS->sumEntries()/ds_US->sumEntries());
-	bgLS_frac.setConstant(true);
+		/*
+		/////////////////////
+		!!!!   WARNING   !!!!
+		/////////////////////
+		*/
 
-	// Mass delta from embedding:
-	RooFormulaVar sig2_mu_bound("sig2_mu", "sig2_mu", "@0 + 0.560180", RooArgList(sig1_mu));
-	RooFormulaVar sig3_mu_bound("sig3_mu", "sig3_mu", "@0 + 0.890502", RooArgList(sig1_mu));
+		// Bound means for 2S and 3S based on embedding
+		// THIS SUPERCEDES SIG2_MU AND SIG3_MU VALUES WITH BOUND ONES
 
-	// Create PDFs
-	RooExponential *expLS = new RooExponential("expLS","LS exp background", mass, bgLS);
-	RooExponential *expUS = new RooExponential("expUS","US Exp background", mass, bgUS);
-	RooCBShape *gauss1 = new RooCBShape("gauss1", "Gaussian signal 1", mass, sig1_mu, sig1_sigma, sig1_alpha, sig1_n);
-	RooCBShape *gauss2 = new RooCBShape("gauss2", "Gaussian signal 2", mass, sig2_mu_bound, sig2_sigma, sig2_alpha, sig2_n);
-	RooCBShape *gauss3 = new RooCBShape("gauss3", "Gaussian signal 3", mass, sig3_mu_bound, sig3_sigma, sig3_alpha, sig3_n);
+		RooFormulaVar form_sig2_mu_bound("form_sig2_mu", "Signal 2 #mu - bound", "@0 + 0.560180", RooArgList(sig1_mu));
+		RooFormulaVar form_sig3_mu_bound("form_sig3_mu", "Signal 3 #mu - bound", "@0 + 0.890502", RooArgList(sig1_mu));
+
+		/*
+		/////////////////////
+		YOU WERE WARNED ¯\_(ツ)_/¯
+		/////////////////////
+		*/
+
+		RooCBShape pdf_sig1("pdf_sig1", "Signal 1 - Crystall Ball, onesided", mass, var_sig1_mu, var_sig1_sigma, var_sig1_alpha, var_sig1_n);
+		RooCBShape pdf_sig2("pdf_sig2", "Signal 2 - Crystall Ball, onesided", mass, form_sig2_mu_bound, var_sig2_sigma, var_sig2_alpha, var_sig2_n);
+		RooCBShape pdf_sig3("pdf_sig3", "Signal 3 - Crystall Ball, onesided", mass, form_sig3_mu_bound, var_sig3_sigma, var_sig3_alpha, var_sig3_n);
+	}
+	else
+	{
+		cout << "Invalid signal shape. Exiting..." << endl;
+		return;
+	}
 
 	/*
 	RooCrystalBall *gauss1 = new RooCrystalBall("gauss1", "Gaussian signal 1", mass, sig1_mu, sig1_sigma, sig1_alphaL, sig1_alphaR, sig1_nL, sig1_nR);
 	RooCrystalBall *gauss2 = new RooCrystalBall("gauss2", "Gaussian signal 2", mass, sig2_mu, sig2_sigma, sig2_alphaL, sig2_alphaR, sig2_nL, sig2_nR);
 	RooCrystalBall *gauss3 = new RooCrystalBall("gauss3", "Gaussian signal 3", mass, sig3_mu, sig3_sigma, sig3_alphaL, sig3_alphaR, sig3_nL, sig3_nR);
 	*/
+	
+	// Recursive fractions
+	RooRealVar var_bg_comb_frac("var_bg_comb_frac","Fraction of combinatorial background", frac[0][0], frac[0][1], frac[0][2]);
+	RooRealVar var_bg_res_frac("var_bg_res_frac","Fraction of residual background", frac[1][0], frac[1][1], frac[1][2]);
+	RooRealVar var_sig1_frac("var_sig1_frac","Fraction of signal 1", frac[2][0], frac[2][1], frac[2][2]);
+	RooRealVar var_sig2_frac("var_sig2_frac","Fraction of signal 2", frac[3][0], frac[3][1], frac[3][2]);
+
+	/*
+	/////////////////////
+	!!!!   WARNING   !!!!
+	/////////////////////
+
+	THESE SETTING CHANGE PARAMETER VALUES FOUND IN THE PAR HEADERS
+	DO NOT BE SURPRISED THE CODE DOES NOT PICK THEM UP!!!
+	*/
+
+	// Ensure the combinatorial background describes the LS data
+	// THIS SUPERCEDES FRACTION SETTING FOR COMBINATORIAL BACKGROUND
+
+	var_bg_comb_frac.setVal(ds_LS->sumEntries()/ds_US->sumEntries());
+	var_bg_comb_frac.setConstant(true);
+
+	/*
+	/////////////////////
+	YOU WERE WARNED ¯\_(ツ)_/¯
+	/////////////////////
+	*/
 
 	// Add PDFs together with recursive fractions (forces all ratios to be in [0,1])
-	RooAddPdf *total_sim = new RooAddPdf("total_sim", "US total", RooArgList(*expLS, *expUS, *gauss1, *gauss2, *gauss3), RooArgList(bgLS_frac, bgUS_frac, sig1_frac, sig2_frac), kTRUE);
-
-	// Simultaneous model
-	RooSimultaneous * simPdf = new RooSimultaneous("simPdf", "simPdf", sample);
+	if (kBG == "exp" && kSIG == "CBShape")
+		RooAddPdf pdf_total_US("pdf_total_US", "Total PDF for US data", RooArgList(pdf_bg_comb, pdf_bg_res, pdf_sig1, pdf_sig2, pdf_sig3), RooArgList(var_bg_comb_frac, var_bg_res_frac, var_sig1_frac, var_sig2_frac), kTRUE);
+	else
+	{
+		cout << "Invalid signal/background commbination. Exitting..." << endl;
+		return;
+	}
 
 	// Add PDFs to the simultaneous model
 	simPdf->addPdf(*expLS, "LS");
-	simPdf->addPdf(*total_sim, "US");
+	simPdf->addPdf(pdf_total_US, "US");
 
 	// Fit the model to the combined dataset
-	RooFitResult *result = simPdf->fitTo(*ds_comb,
+	RooFitResult * result = simPdf->fitTo(*ds_comb,
 										Extended(true),
 										//Minimizer("Minuit2", "scan"),
 										Minimizer("Minuit2", "migrad"),
@@ -139,12 +193,16 @@ void fit_bin(RooDataSet * ds_US, RooDataSet * ds_LS, TString trigger, TString bi
 										Strategy(2),
 										EvalErrorWall(1),
 										RecoverFromUndefinedRegions(1000),
-										Save());
+										Save()
+									);
 
 	// Compute yields
+	/*
 	RooGenericPdf yield1("yield1", "yield from signal fit", "(1.0-bgLS_frac)*(1.0-bgUS_frac)", RooArgSet(bgLS_frac, bgUS_frac));
 	RooGenericPdf yield2("yield2", "yield from signal 2 fit", "(1.0-bgLS_frac)*(1.0-bgUS_frac)*(1.0-sig1_frac)", RooArgSet(bgLS_frac, bgUS_frac, sig1_frac));
 	RooGenericPdf yield3("yield3", "yield from signal 3 fit", "(1.0-bgLS_frac)*(1.0-bgUS_frac)*(1.0-sig1_frac)*(1.0-sig2_frac)", RooArgSet(bgLS_frac, bgUS_frac, sig1_frac, sig2_frac));
+	*/
+
 	cout << "US entries: " << US_entries << ", LS entries: " << LS_entries << endl << endl;
 	cout << "yield frac: " << yield1.getVal() << ", yield: " << (yield1.getVal()*US_entries) << endl;
 	cout << "error frac: " << yield1.getPropagatedError(*result) << ", error: " << (yield1.getPropagatedError(*result)*US_entries) << endl << endl;
