@@ -13,7 +13,7 @@ void UpsFitter(TString kTRIG = "BHT2", TString kBIN = "int", TString kBG = "exp"
 	else
 	{
 		cout << "Invalid trigger specified. Exiting..." << endl;
-		return 1;
+		return;
 	}
 
 	// Check if the bin makes sense
@@ -22,7 +22,7 @@ void UpsFitter(TString kTRIG = "BHT2", TString kBIN = "int", TString kBG = "exp"
 	if (!bool_bin)
 	{
 		cout << "Invalid bin specified. Exiting..." << endl;
-		return 2;
+		return;
 	}
 
 	// Load datasets for the specified bin
@@ -44,7 +44,7 @@ void UpsFitter(TString kTRIG = "BHT2", TString kBIN = "int", TString kBG = "exp"
 	f_IN->Close();
 	cout << "Fit for " << kTRIG << "_" << kBIN << " completed!" << endl;
 
-	return 0;
+	return;
 }
 
 /////////////////////////////////////////////////////////////
@@ -61,26 +61,28 @@ void fit_bin(RooDataSet * ds_US, RooDataSet * ds_LS, TString kTRIG, TString kBIN
 	sample.defineType("LS");
 
 	// Simultaneous model
-	RooSimultaneous simPdf("simPdf", "simPdf", sample);
+	RooSimultaneous * simPdf = new RooSimultaneous("simPdf", "simPdf", sample);
 
 	// Define a combined dataset 
-	RooDataSet ds_comb("ds_comb", "Combined dataset", RooArgList(mass), Index(sample), Import("US", *ds_US), Import("LS", *ds_LS));
+	RooDataSet * ds_comb = new RooDataSet("ds_comb", "Combined dataset", RooArgList(mass), Index(sample), Import("US", *ds_US), Import("LS", *ds_LS));
 	
 	// Get parameters for this bin and trigger
-	vector<vector<Double_t>> par_sig = map_par[kTRIG + "_" + kBIN];
+	vector<vector<Double_t>> par_sig = map_par_sig[kTRIG + "_" + kBIN];
 	vector<vector<Double_t>> par_bg = map_par_bg[kTRIG + "_" + kBG];
 	vector<vector<Double_t>> frac = map_frac[kTRIG + "_" + kBIN];
 
 	// Load parameters and create PDFs
 	// Background
-	if (kBG == "exp")
-	{
+	//if (kBG == "exp")
+	//{
 		RooRealVar var_bg_comb1("var_bg_comb","Combiantorial background exponent", par_bg[0][0], par_bg[0][1], par_bg[0][2]);
 		RooRealVar var_bg_res1("var_bg_res","Residual background exponent", par_bg[1][0], par_bg[1][1], par_bg[1][2]);
 
-		RooExponential pdf_bg_comb("pdf_bg_comb","Background, combinatorial, exponential", mass, var_bg_comb1);
-		RooExponential pdf_bg_res("pdf_bg_res","Background, residual, exponential", mass, var_bg_res1);
-	}
+		RooExponential * pdf_bg_comb = new RooExponential("pdf_bg_comb","Background, combinatorial, exponential", mass, var_bg_comb1);
+		RooExponential * pdf_bg_res = new RooExponential("pdf_bg_res","Background, residual, exponential", mass, var_bg_res1);
+	//}
+
+	/*
 	else if (kBG == "cheby")
 	{
 		cout << "Not implemented yet :(. Exitting..." << endl;
@@ -91,10 +93,11 @@ void fit_bin(RooDataSet * ds_US, RooDataSet * ds_LS, TString kTRIG, TString kBIN
 		cout << "Invalid background type. Exitting..." << endl;
 		return;
 	}
+	*/
 
 	// Signal
-	if (kSIG == "CBShape")
-	{
+	//if (kSIG == "CBShape")
+	//{
 		RooRealVar var_sig1_mu("var_sig1_mu","Signal 1 #mu", par_sig[0][0], par_sig[0][1], par_sig[0][2]);
 		RooRealVar var_sig1_sigma("var_sig1_sigma","Signal 1 #sigma", par_sig[1][0], par_sig[1][1], par_sig[1][2]);
 		RooRealVar var_sig1_alpha("var_sig1_alpha","Signal 1 #alpha", par_sig[2][0], par_sig[2][1], par_sig[2][2]);
@@ -119,8 +122,8 @@ void fit_bin(RooDataSet * ds_US, RooDataSet * ds_LS, TString kTRIG, TString kBIN
 		// Bound means for 2S and 3S based on embedding
 		// THIS SUPERCEDES SIG2_MU AND SIG3_MU VALUES WITH BOUND ONES
 
-		RooFormulaVar form_sig2_mu_bound("form_sig2_mu", "Signal 2 #mu - bound", "@0 + 0.560180", RooArgList(sig1_mu));
-		RooFormulaVar form_sig3_mu_bound("form_sig3_mu", "Signal 3 #mu - bound", "@0 + 0.890502", RooArgList(sig1_mu));
+		RooFormulaVar form_sig2_mu_bound("form_sig2_mu", "Signal 2 #mu - bound", "@0 + 0.560180", RooArgList(var_sig1_mu));
+		RooFormulaVar form_sig3_mu_bound("form_sig3_mu", "Signal 3 #mu - bound", "@0 + 0.890502", RooArgList(var_sig1_mu));
 
 		/*
 		/////////////////////
@@ -128,15 +131,15 @@ void fit_bin(RooDataSet * ds_US, RooDataSet * ds_LS, TString kTRIG, TString kBIN
 		/////////////////////
 		*/
 
-		RooCBShape pdf_sig1("pdf_sig1", "Signal 1 - Crystall Ball, onesided", mass, var_sig1_mu, var_sig1_sigma, var_sig1_alpha, var_sig1_n);
-		RooCBShape pdf_sig2("pdf_sig2", "Signal 2 - Crystall Ball, onesided", mass, form_sig2_mu_bound, var_sig2_sigma, var_sig2_alpha, var_sig2_n);
-		RooCBShape pdf_sig3("pdf_sig3", "Signal 3 - Crystall Ball, onesided", mass, form_sig3_mu_bound, var_sig3_sigma, var_sig3_alpha, var_sig3_n);
-	}
-	else
-	{
-		cout << "Invalid signal shape. Exiting..." << endl;
-		return;
-	}
+		RooCBShape * pdf_sig1 = new RooCBShape("pdf_sig1", "Signal 1 - Crystall Ball, onesided", mass, var_sig1_mu, var_sig1_sigma, var_sig1_alpha, var_sig1_n);
+		RooCBShape * pdf_sig2 = new RooCBShape("pdf_sig2", "Signal 2 - Crystall Ball, onesided", mass, form_sig2_mu_bound, var_sig2_sigma, var_sig2_alpha, var_sig2_n);
+		RooCBShape * pdf_sig3 = new RooCBShape("pdf_sig3", "Signal 3 - Crystall Ball, onesided", mass, form_sig3_mu_bound, var_sig3_sigma, var_sig3_alpha, var_sig3_n);
+	//}
+	//else
+	//{
+	//	cout << "Invalid signal shape. Exiting..." << endl;
+	//	return;
+	//}
 
 	/*
 	RooCrystalBall *gauss1 = new RooCrystalBall("gauss1", "Gaussian signal 1", mass, sig1_mu, sig1_sigma, sig1_alphaL, sig1_alphaR, sig1_nL, sig1_nR);
@@ -172,17 +175,17 @@ void fit_bin(RooDataSet * ds_US, RooDataSet * ds_LS, TString kTRIG, TString kBIN
 	*/
 
 	// Add PDFs together with recursive fractions (forces all ratios to be in [0,1])
-	if (kBG == "exp" && kSIG == "CBShape")
-		RooAddPdf pdf_total_US("pdf_total_US", "Total PDF for US data", RooArgList(pdf_bg_comb, pdf_bg_res, pdf_sig1, pdf_sig2, pdf_sig3), RooArgList(var_bg_comb_frac, var_bg_res_frac, var_sig1_frac, var_sig2_frac), kTRUE);
-	else
-	{
-		cout << "Invalid signal/background commbination. Exitting..." << endl;
-		return;
-	}
+	//if (kBG == "exp" && kSIG == "CBShape")
+		RooAddPdf * pdf_total_US = new RooAddPdf("pdf_total_US", "Total PDF for US data", RooArgList(*pdf_bg_comb, *pdf_bg_res, *pdf_sig1, *pdf_sig2, *pdf_sig3), RooArgList(var_bg_comb_frac, var_bg_res_frac, var_sig1_frac, var_sig2_frac), kTRUE);
+	//else
+	//{
+	//	cout << "Invalid signal/background commbination. Exitting..." << endl;
+	//	return;
+	//}
 
 	// Add PDFs to the simultaneous model
-	simPdf->addPdf(*expLS, "LS");
-	simPdf->addPdf(pdf_total_US, "US");
+	simPdf->addPdf(*pdf_bg_comb, "LS");
+	simPdf->addPdf(*pdf_total_US, "US");
 
 	// Fit the model to the combined dataset
 	RooFitResult * result = simPdf->fitTo(*ds_comb,
@@ -197,25 +200,25 @@ void fit_bin(RooDataSet * ds_US, RooDataSet * ds_LS, TString kTRIG, TString kBIN
 									);
 
 	// Compute yields
-	/*
-	RooGenericPdf yield1("yield1", "yield from signal fit", "(1.0-bgLS_frac)*(1.0-bgUS_frac)", RooArgSet(bgLS_frac, bgUS_frac));
-	RooGenericPdf yield2("yield2", "yield from signal 2 fit", "(1.0-bgLS_frac)*(1.0-bgUS_frac)*(1.0-sig1_frac)", RooArgSet(bgLS_frac, bgUS_frac, sig1_frac));
-	RooGenericPdf yield3("yield3", "yield from signal 3 fit", "(1.0-bgLS_frac)*(1.0-bgUS_frac)*(1.0-sig1_frac)*(1.0-sig2_frac)", RooArgSet(bgLS_frac, bgUS_frac, sig1_frac, sig2_frac));
-	*/
+	RooGenericPdf yield1("yield1", "yield from signal fit", "(1.0-var_bg_comb_frac)*(1.0-var_bg_res_frac)", RooArgSet(var_bg_comb_frac, var_bg_res_frac));
+	RooGenericPdf yield2("yield2", "yield from signal 2 fit", "(1.0-var_bg_comb_frac)*(1.0-var_bg_res_frac)*(1.0-var_sig1_frac)", RooArgSet(var_bg_comb_frac, var_bg_res_frac, var_sig1_frac));
+	RooGenericPdf yield3("yield3", "yield from signal 3 fit", "(1.0-var_bg_comb_frac)*(1.0-var_bg_res_frac)*(1.0-var_sig1_frac)*(1.0-var_sig2_frac)", RooArgSet(var_bg_comb_frac, var_bg_res_frac, var_sig1_frac, var_sig2_frac));
 
+	/*
 	cout << "US entries: " << US_entries << ", LS entries: " << LS_entries << endl << endl;
 	cout << "yield frac: " << yield1.getVal() << ", yield: " << (yield1.getVal()*US_entries) << endl;
 	cout << "error frac: " << yield1.getPropagatedError(*result) << ", error: " << (yield1.getPropagatedError(*result)*US_entries) << endl << endl;
 	cout << "yield frac: " << yield1.getVal() << ", yield: " << ((yield1.getVal()-yield2.getVal()-yield3.getVal())*US_entries) << endl;
 	cout << "yield2 frac: " << yield2.getVal() << ", yield2: " << ((yield2.getVal()-yield3.getVal()) * US_entries) << endl;
 	cout << "yield3 frac: " << yield3.getVal() << ", yield3: " << (yield3.getVal() * US_entries) << endl;
+	*/
 
 	// Create a canvas for plotting
 	TCanvas *cnv = new TCanvas("cnv", "cnv", 1600, 1200);
 
 	// Plot simulated data
 	cnv->cd();
-	RooPlot* frame = mass.frame(((max_mass - min_mass)/bin_width));
+	RooPlot* frame = mass.frame(((kMASS_MAX - kMASS_MIN)/kBIN_WIDTH));
 	frame->SetTitle("");
 	frame->GetYaxis()->SetLabelSize(0.04);
 	frame->GetYaxis()->SetTitleSize(0.05);
@@ -230,8 +233,9 @@ void fit_bin(RooDataSet * ds_US, RooDataSet * ds_LS, TString kTRIG, TString kBIN
 	gPad->SetTopMargin(0.05);
 	ds_LS->plotOn(frame, MarkerColor(kRed), LineColor(kRed));
 	ds_US->plotOn(frame);
-	total_sim->plotOn(frame, VisualizeError(*result, sigma, useLinear), DrawOption("F"), FillStyle(3001));
-	total_sim->plotOn(frame);
+	pdf_total_US->plotOn(frame, VisualizeError(*result, kSIGMA, kLINEAR_ERR), DrawOption("F"), FillStyle(3001));
+	pdf_total_US->plotOn(frame);
+	/*
 	total_sim->plotOn(frame, Components(*expLS), LineColor(kRed), LineStyle(kDashed), VisualizeError(*result, sigma, useLinear), DrawOption("F"), FillColor(kRed), FillStyle(3001));
 	total_sim->plotOn(frame, Components(*expLS), LineColor(kRed), LineStyle(kDashed));
 	total_sim->plotOn(frame, Components(*expUS), LineColor(kGray), LineStyle(kDashed), VisualizeError(*result, sigma, useLinear), DrawOption("F"), FillColor(kGray), FillStyle(3001));
@@ -247,15 +251,16 @@ void fit_bin(RooDataSet * ds_US, RooDataSet * ds_LS, TString kTRIG, TString kBIN
 	total_sim->plotOn(frame, Components(RooArgSet(*expLS, *expUS)), LineColor(kOrange), LineStyle(kSolid), VisualizeError(*result, sigma, useLinear), DrawOption("F"), FillColor(kOrange), FillStyle(3001));
 	total_sim->plotOn(frame, Components(RooArgSet(*expLS, *expUS)), LineColor(kOrange), LineStyle(kSolid));
 	total_sim->plotOn(frame);
+	*/
 	frame->Draw("F");
 	//--------------------------------------------
 
 	// Calculate chi2 after extracting the number of parameters - used to calculate Ndof
-	Int_t nparam_US = total_sim->getParameters(*ds_US)->selectByAttrib("Constant", kFALSE)->getSize();
+	Int_t nparam_US = simPdf->getParameters(*ds_US)->selectByAttrib("Constant", kFALSE)->getSize();
 	cout << "nparam_US = " << nparam_US << endl;
 	Double_t chi2ndf_US = frame->chiSquare(nparam_US);
 
-	Int_t nparam_LS = expLS->getParameters(*ds_LS)->selectByAttrib("Constant", kFALSE)->getSize();
+	Int_t nparam_LS = simPdf->getParameters(*ds_LS)->selectByAttrib("Constant", kFALSE)->getSize();
 	cout << "nparam_LS = " << nparam_LS << endl;
 	Double_t chi2ndf_LS = frame->chiSquare(nparam_LS);
 
@@ -279,11 +284,11 @@ void fit_bin(RooDataSet * ds_US, RooDataSet * ds_LS, TString kTRIG, TString kBIN
 	//RooGenericPdf yield1("yield1", "yield from signal fit", "(1.0-bgLS_frac)*(1.0-bgUS_frac)", RooArgSet(bgLS_frac, bgUS_frac));
 
 	// Compute signal yields
-	RooAbsReal * sig1_int = gauss1->createIntegral(mass, NormSet(mass), Range("full"));
+	RooAbsReal * sig1_int = pdf_sig1->createIntegral(mass, NormSet(mass), Range("full"));
 	RooProduct sig1_yield("sig1_yield", "sig1_yield", RooArgSet(*sig1_int, US_entries));
-	RooAbsReal * sig2_int = gauss2->createIntegral(mass, NormSet(mass), Range("full"));
+	RooAbsReal * sig2_int = pdf_sig2->createIntegral(mass, NormSet(mass), Range("full"));
 	RooProduct sig2_yield("sig2_yield", "sig2_yield", RooArgSet(*sig2_int, US_entries));
-	RooAbsReal * sig3_int = gauss3->createIntegral(mass, NormSet(mass), Range("full"));
+	RooAbsReal * sig3_int = pdf_sig3->createIntegral(mass, NormSet(mass), Range("full"));
 	RooProduct sig3_yield("sig3_yield", "sig3_yield", RooArgSet(*sig3_int, US_entries));
 
 
@@ -300,18 +305,19 @@ void fit_bin(RooDataSet * ds_US, RooDataSet * ds_LS, TString kTRIG, TString kBIN
 	cout << "frac: " << yield1.getVal() << ", yield: " << (yield1.getVal()*US_entries) << endl;
 	cout << "error frac: " << yield1.getPropagatedError(*result) << ", error: " << (yield1.getPropagatedError(*result)*US_entries) << endl << endl;
 
-	cout << "sig1 yield: " << sig1_yield.getVal() << endl;
-	cout << "sig2 yield: " << sig2_yield.getVal() << endl;
-	cout << "sig3 yield: " << sig3_yield.getVal() << endl;
-	cout << "combined: " << (sig1_yield.getVal() + sig2_yield.getVal() + sig3_yield.getVal()) << endl;
+	//cout << "sig1 yield: " << sig1_yield.getVal() << endl;
+	//cout << "sig2 yield: " << sig2_yield.getVal() << endl;
+	//cout << "sig3 yield: " << sig3_yield.getVal() << endl;
+	//cout << "combined: " << (sig1_yield.getVal() + sig2_yield.getVal() + sig3_yield.getVal()) << endl;
 
 	// Print fit results
 	cout << "Results!" << endl;
 	result->Print("v");
 
 	// Save results in a text file
+	/*
 	ofstream out;
-	out.open("output/results/" + trigger + "_" + bin + "_" + date + "_" + tag + ".txt");
+	out.open("output/results/" + kTRIG + "_" + kBIN + "_" + s_date + "_" + s_tag + ".txt");
 	out << "US entries: " << US_entries << ", LS entries: " << LS_entries << endl;
 	out << "#chi^{2}/N^{US}_{dof} = " << chi2ndf_US << ", #chi^{2}/N^{LS}_{dof} = " << chi2ndf_LS << endl;
 	out << "frac: " << yield1.getVal() << ", yield: " << (yield1.getVal()*US_entries) << endl;
@@ -340,7 +346,7 @@ void fit_bin(RooDataSet * ds_US, RooDataSet * ds_LS, TString kTRIG, TString kBIN
 	out << "S = " << (yield1.getVal()*US_entries) << ", B = " << US_entries << endl;
 	out << "S/sqrt(S+B) = " << (yield1.getVal()*US_entries)/ sqrt((yield1.getVal()*US_entries + US_entries)) << endl;
 	out.close();
-
+	*/
 	
 	TLatex *latex1 = new TLatex();
 	latex1->SetTextSize(0.045);
@@ -360,13 +366,13 @@ void fit_bin(RooDataSet * ds_US, RooDataSet * ds_LS, TString kTRIG, TString kBIN
 	*/
 
 	// TODO rewrite as with pT bins!!!
-	cnv->cd()->SaveAs("output/fig/" + trigger + "_" + bin + "_" + date + "_" + tag + ".png");
-	cnv->cd()->SaveAs("output/rootfiles/" + trigger + "_" + bin + "_" + date + "_" + tag + ".root");
+	cnv->cd()->SaveAs("output/fig/" + kTRIG + "_" + kBIN + "_" + s_date + "_" + s_tag + ".png");
+	cnv->cd()->SaveAs("output/rootfiles/" + kTRIG + "_" + kBIN + "_" + s_date + "_" + s_tag + ".root");
 	
 	gStyle->SetPaintTextFormat("4.2f");
 	hcorr->Draw("colz text");
 	gPad->SetRightMargin(0.15);
-	cnv->cd()->SaveAs("output/corr/" + trigger + "_" + bin + "_" + date + "_" + tag + "_corr.png");
+	cnv->cd()->SaveAs("output/corr/" + kTRIG + "_" + kBIN + "_" + s_date + "_" + s_tag + "_corr.png");
 
 	// Clean up
 	delete cnv;

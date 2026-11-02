@@ -81,7 +81,8 @@ GLOBAL VARIABLES
 */
 
 // Global maps to store parameters for different bins/triggers
-map<TString, vector<vector<Double_t>>> map_par;
+map<TString, vector<vector<Double_t>>> map_par_sig;
+map<TString, vector<vector<Double_t>>> map_par_bg;
 map<TString, vector<vector<Double_t>>> map_frac;
 
 // Variables for fitting
