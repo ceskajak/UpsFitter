@@ -1,30 +1,9 @@
-#include <iostream>
-#include "map"
+#pragma once
 
-#include "TString.h"
-#include "TFile.h"
-#include "TH1.h"
-#include "TCanvas.h"
-#include "TStyle.h"
-#include "TROOT.h"
-#include "TLatex.h"
-
-#ifndef __CINT__
-#include "RooGlobalFunc.h"
-#endif
-
-#include "RooRealVar.h"
-#include "RooDataHist.h"
-#include "RooPlot.h"
-#include "RooAddPdf.h"
-#include "RooGaussian.h"
-#include "RooExponential.h"
-#include "RooHist.h"
-#include "RooArgSet.h"
-#include "RooFitResult.h"
-#include "RooGenericPdf.h"
+#include "common.hxx"
 
 // Namespaces
+
 using namespace std;
 using namespace RooFit;
 
@@ -38,8 +17,8 @@ INPUT FILES
 TFile * f_IN;
 
 // File locations
-TString f_BHT1 = "../data/BHT1.masssp.root";
-TString f_BHT2 = "../data/BHT2_251128.260209.cands.root";
+TString f_BHT1 = "../../data/BHT1.masssp.root";
+TString f_BHT2 = "../../data/BHT2_251128.unfolded_trees.root";
 
 /*
 /////////////////////////////////////////////////////////////
@@ -53,9 +32,9 @@ TString s_tag = "default";	// tag for output files
 time_t timestamp = time(NULL);
 struct tm datetime = *localtime(&timestamp);
 
-char time_output[6];
+char time_output[7];
 
-strftime(time_output, 8, "%y%m%d", &datetime);
+strftime(time_output, 7, "%y%m%d", &datetime);
 
 TString s_date = time_output;
 
@@ -86,13 +65,14 @@ map<TString, vector<vector<Double_t>>> map_par_bg;
 map<TString, vector<vector<Double_t>>> map_frac;
 
 // Variables for fitting
-RooRealVar mass("mass", "mass", kMASS_MIN, kMASS_MAX, "GeV/c^{2}");
+RooRealVar mass("m", "mass", kMASS_MIN, kMASS_MAX, "GeV/c^{2}");
 mass.setRange("full", kMASS_MIN, kMASS_MAX);
 
 RooRealVar charge("charge", "charge", -3, 3, "e");
 
 Bool_t bool_bin = false;
 vector<TString> vec_bins = {"int", "0mult1", "1mult2", "2mult3", "3mult4", "4mult5", "4mult8" ,"5mult8"};
+
 
 /*
 /////////////////////////////////////////////////////////////

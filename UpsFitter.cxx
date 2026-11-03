@@ -1,15 +1,24 @@
-#include "setup.hxx"
+#include "headers/common.hxx"
+#include "headers/setup.hxx"
+#include "headers/cuts.hxx"
 //#include "pars/parsBHT1.hxx"
 #include "pars/parsBHT2.hxx"
 
 /////////////////////////////////////////////////////////////
-void UpsFitter(TString kTRIG = "BHT2", TString kBIN = "int", TString kBG = "exp", TString kSIG = "CBShape")
+void UpsFitter(TString kTRIG = "BHT2", TString kBIN = "2mult3", TString kBG = "exp", TString kSIG = "CBShape", TString kMULT = "subcorr")
 {
 	// Load the data file
+	int kADC_TRIG;
 	if (kTRIG == "BHT1")
+	{
 		f_IN = new TFile(f_BHT1, "READ");
+		kADC_TRIG = kADC_TRIG_BHT1;
+	}
 	else if (kTRIG == "BHT2")
+	{
 		f_IN = new TFile(f_BHT2, "READ");
+		kADC_TRIG = kADC_TRIG_BHT2;
+	}
 	else
 	{
 		cout << "Invalid trigger specified. Exiting..." << endl;
@@ -25,13 +34,61 @@ void UpsFitter(TString kTRIG = "BHT2", TString kBIN = "int", TString kBG = "exp"
 		return;
 	}
 
+	if (kMULT == "none") s_mult = s_mult_none;
+	else if (kMULT == "sub") s_mult = s_mult_sub;
+	else if (kMULT == "corr") s_mult = s_mult_corr;
+	else if (kMULT == "subcorr") s_mult = s_mult_subcorr;
+	else
+	{
+		cout << "Invalid TofMult variant (none|sub|corr|subcorr). Exiting..." << endl;
+		return;
+	}
+
+	if (kBIN == "int")
+		s_cut_mult = "";
+	else if (kBIN.Contains("mult"))
+	{
+		s_tag += "_" + kMULT;
+		s_cut_mult = Form(" && (%s > 3*%s) && (%s <= 3*%s)",
+						s_mult.Data(), TString(kBIN(0, kBIN.Index("mult"))).Data(),
+						s_mult.Data(), TString(kBIN(kBIN.Index("mult") + 4, kBIN.Length())).Data());
+	}
+	else
+	{
+		cout << "Invalid bin format. Exiting..." << endl;
+		return;
+	}
+
+	// Initialize cuts
+
+	TString s_cuts = CombineCuts({s_cut_VzDiff,
+									s_cut_BEMC_valid,
+									s_cut_y,
+									s_cut_nSigmaE,
+									s_cut_ETOWoECLU,
+									s_cut_EoP,
+									MakeCutADC(kADC_TRIG),
+									s_cut_DZ,
+									s_cut_Dphi,
+									s_cut_nHitsFit,
+									s_cut_nHitsRatio,
+									s_cut_DCA});
+
+	s_cuts += s_cut_mult;
+
+	cout << "Applied cuts: " << s_cuts << endl;
+
 	// Load datasets for the specified bin
-	TTree * tree = (TTree *)f_IN->Get("t_" + kBIN);
+	TTree * tree = (TTree *)f_IN->Get("tree");
+
+	TTree * tree_cut = (TTree *)tree->CopyTree(s_cuts);
+
+	tree_cut->Print();
 		
-	RooDataSet * ds_US = new RooDataSet("ds_US_" + kBIN, "ds_US_" + kBIN, RooArgSet(mass, charge), Import(*tree), Cut("charge==0"));
+	RooDataSet * ds_US = new RooDataSet("ds_US_" + kBIN, "ds_US_" + kBIN, RooArgSet(mass, charge), Import(*tree_cut), Cut("charge==0"));
 	ds_US = (RooDataSet *)ds_US->reduce(RooArgSet(mass));
 	ds_US->Print();
-	RooDataSet * ds_LS = new RooDataSet("ds_LS_" + kBIN, "ds_LS_" + kBIN, RooArgSet(mass, charge), Import(*tree), Cut("charge!=0"));
+	RooDataSet * ds_LS = new RooDataSet("ds_LS_" + kBIN, "ds_LS_" + kBIN, RooArgSet(mass, charge), Import(*tree_cut), Cut("charge!=0"));
 	ds_LS = (RooDataSet *)ds_LS->reduce(RooArgSet(mass));
 	ds_LS->Print();
 
@@ -67,9 +124,16 @@ void fit_bin(RooDataSet * ds_US, RooDataSet * ds_LS, TString kTRIG, TString kBIN
 	RooDataSet * ds_comb = new RooDataSet("ds_comb", "Combined dataset", RooArgList(mass), Index(sample), Import("US", *ds_US), Import("LS", *ds_LS));
 	
 	// Get parameters for this bin and trigger
-	vector<vector<Double_t>> par_sig = map_par_sig[kTRIG + "_" + kBIN];
+	TString key_bin = kTRIG + "_" + kBIN;
+	if (!map_par_sig.count(key_bin) || !map_frac.count(key_bin))
+	{
+		cout << "No parameters for " << key_bin << ", falling back to " << kTRIG << "_int" << endl;
+		key_bin = kTRIG + "_int";
+	}
+	vector<vector<Double_t>> par_sig = map_par_sig[key_bin];
 	vector<vector<Double_t>> par_bg = map_par_bg[kTRIG + "_" + kBG];
-	vector<vector<Double_t>> frac = map_frac[kTRIG + "_" + kBIN];
+	vector<vector<Double_t>> frac = map_frac[key_bin];
+
 
 	// Load parameters and create PDFs
 	// Background
