@@ -281,17 +281,6 @@ void fit_bin(RooDataSet * ds_US, RooDataSet * ds_LS, TString kTRIG, TString kBIN
 	result->correlationMatrix().Print();
 	result->covarianceMatrix().Print();
 
-	//RooGenericPdf yield1("yield1", "yield from signal fit", "(1.0-bgLS_frac)*(1.0-bgUS_frac)", RooArgSet(bgLS_frac, bgUS_frac));
-
-	// Compute signal yields
-	RooAbsReal * sig1_int = pdf_sig1->createIntegral(mass, NormSet(mass), Range("full"));
-	RooProduct sig1_yield("sig1_yield", "sig1_yield", RooArgSet(*sig1_int, US_entries));
-	RooAbsReal * sig2_int = pdf_sig2->createIntegral(mass, NormSet(mass), Range("full"));
-	RooProduct sig2_yield("sig2_yield", "sig2_yield", RooArgSet(*sig2_int, US_entries));
-	RooAbsReal * sig3_int = pdf_sig3->createIntegral(mass, NormSet(mass), Range("full"));
-	RooProduct sig3_yield("sig3_yield", "sig3_yield", RooArgSet(*sig3_int, US_entries));
-
-
 	/*
 	// Optional: Run Minos only on critical parameters
 	for (auto pname : {"sig1_yield", "sig2_yield", "sig3_yield", "bgUS_yield"}) {
@@ -304,11 +293,6 @@ void fit_bin(RooDataSet * ds_US, RooDataSet * ds_LS, TString kTRIG, TString kBIN
 	cout << "US entries: " << US_entries << ", LS entries: " << LS_entries << endl;
 	cout << "frac: " << yield1.getVal() << ", yield: " << (yield1.getVal()*US_entries) << endl;
 	cout << "error frac: " << yield1.getPropagatedError(*result) << ", error: " << (yield1.getPropagatedError(*result)*US_entries) << endl << endl;
-
-	//cout << "sig1 yield: " << sig1_yield.getVal() << endl;
-	//cout << "sig2 yield: " << sig2_yield.getVal() << endl;
-	//cout << "sig3 yield: " << sig3_yield.getVal() << endl;
-	//cout << "combined: " << (sig1_yield.getVal() + sig2_yield.getVal() + sig3_yield.getVal()) << endl;
 
 	// Print fit results
 	cout << "Results!" << endl;
@@ -355,8 +339,8 @@ void fit_bin(RooDataSet * ds_US, RooDataSet * ds_LS, TString kTRIG, TString kBIN
 	latex1->DrawLatex(0.55, 0.75, Form("#Upsilon(1S+2S+3S) = %.0f #pm %.0f", (yield1.getVal()*US_entries), (yield1.getPropagatedError(*result)*US_entries)));
 	latex1->DrawLatex(0.55, 0.65, Form("S/#sqrt{S+B} = %.2f", (yield1.getVal()*US_entries)/ sqrt((yield1.getVal()*US_entries + US_entries))));
 
-	cout << "S = " << (yield1.getVal()*US_entries) << ", B = " << US_entries << endl;
-	cout << "S/sqrt(S+B) = " << (yield1.getVal()*US_entries)/ sqrt((yield1.getVal()*US_entries + US_entries)) << endl;
+	cout << "S = " << (yield1.getVal())*US_entries << ", B = " << (1- yield1.getVal())*US_entries << endl;
+	cout << "S/sqrt(S+B) = " << (yield1.getVal()*US_entries)/ sqrt(US_entries) << endl;
 
 	/*
 	TLatex *latex3 = new TLatex();
